@@ -36,40 +36,40 @@ Enable the linter in the VS Code [settings](https://code.visualstudio.com/docs/c
 
 **doiuse.enable**
 
-Type: `Boolean`</br>
-Default: `false`
+  * Type: `Boolean`
+  * Default: `false`
 
 Control whether doiuse is enabled for styles files or not.
 
 **doiuse.messageLevel**
 
-Type: `String`</br>
-Default: `Warning`</br>
-Available values: `"Information", "Warning", "Error"`
+  * Type: `String`
+  * Default: `Warning`
+  * Available values: `"Information", "Warning", "Error"`
 
 Represents a diagnostic level, such as a Information, Warning or Error.
 
 **doiuse.browsers**
 
-Type: `Array`</br>
-Default: `[]`</br>
-Example: `["ie >= 9"]`
+  * Type: `Array`
+  * Default: `[]`
+  * Example: `["ie >= 9"]`
 
 An autoprefixer-like array of browsers. See the [official repository](https://github.com/anandthakker/doiuse) for details.
 
 **doiuse.ignore**
 
-Type: `Array`</br>
-Default: `[]`</br>
-Example: `["rem"]`
+  * Type: `Array`
+  * Default: `[]`
+  * Example: `["rem"]`
 
 An optional array of features to ignore. See the [official repository](https://github.com/anandthakker/doiuse) for details.
 
 **doiuse.ignoreFiles**
 
-Type: `Array`</br>
-Default: `[]`</br>
-Example: `["**/*.css"]`
+  * Type: `Array`
+  * Default: `[]`
+  * Example: `["**/*.css"]`
 
 An optional array of file globs to match against original source file path, to ignore. See the [official repository](https://github.com/anandthakker/doiuse) for details.
 
