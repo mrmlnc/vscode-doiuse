@@ -74,9 +74,9 @@
     "vscode-languageclient": "2.3.0",
     "vscode-languageserver": "2.2.1",
     "multimatch": "2.1.0",
-    "postcss": "5.1.1",
+    "postcss": "5.1.2",
     "postcss-less": "0.14.0",
-    "postcss-scss": "0.1.9",
+    "postcss-scss": "0.2.1",
     "sugarss": "0.1.5"
   },
   "scripts": {
