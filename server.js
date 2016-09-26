@@ -3,15 +3,16 @@
 const path = require('path');
 
 const {
-  createConnection,
-  IPCMessageReader,
-  IPCMessageWriter,
-  TextDocuments,
-  DiagnosticSeverity,
-  ErrorMessageTracker,
-  Files,
-  ResponseError
+	createConnection,
+	IPCMessageReader,
+	IPCMessageWriter,
+	TextDocuments,
+	DiagnosticSeverity,
+	ErrorMessageTracker,
+	Files,
+	ResponseError
 } = require('vscode-languageserver');
+const resolve = require('npm-module-path');
 
 const connection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
 const documents = new TextDocuments();
@@ -26,137 +27,141 @@ let settings = {};
 const notFoundMessage = `Failed to load doiuse library. Please install doiuse in your workspace folder using \'npm install doiuse\' or \'npm install -g doiuse\' and then press Retry.`;
 
 function makeDiagnostic(problem) {
-  const source = problem.usage.source;
-  const message = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
+	const source = problem.usage.source;
+	const message = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
 
-  return {
-    severity: DiagnosticSeverity[settings.messageLevel],
-    message,
-    range: {
-      start: {
-        line: source.start.line - 1,
-        character: source.start.column - 1
-      },
-      end: {
-        line: source.end.line - 1,
-        character: source.end.column
-      }
-    },
-    code: problem.feature,
-    source: 'doiuse'
-  };
+	return {
+		severity: DiagnosticSeverity[settings.messageLevel],
+		message,
+		range: {
+			start: {
+				line: source.start.line - 1,
+				character: source.start.column - 1
+			},
+			end: {
+				line: source.end.line - 1,
+				character: source.end.column
+			}
+		},
+		code: problem.feature,
+		source: 'doiuse'
+	};
 }
 
 function getErrorMessage(err, document) {
-  let errorMessage = `unknown error`;
-  if (typeof err.message === 'string' || err.message instanceof String) {
-    errorMessage = err.message;
-  }
+	let errorMessage = `unknown error`;
+	if (typeof err.message === 'string' || err.message instanceof String) {
+		errorMessage = err.message;
+	}
 
-  const fsPath = Files.uriToFilePath(document.uri);
+	const fsPath = Files.uriToFilePath(document.uri);
 
-  return `vscode-doiuse: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
+	return `vscode-doiuse: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
 }
 
 function validateAllTextDocuments(documents) {
-  const tracker = new ErrorMessageTracker();
-  documents.forEach((document) => {
-    try {
-      validateTextDocument(document);
-    } catch (err) {
-      tracker.add(getErrorMessage(err, document));
-    }
-  });
-  tracker.sendErrors(connection);
+	const tracker = new ErrorMessageTracker();
+	documents.forEach((document) => {
+		try {
+			validateTextDocument(document);
+		} catch (err) {
+			tracker.add(getErrorMessage(err, document));
+		}
+	});
+	tracker.sendErrors(connection);
 }
 
 function validateTextDocument(document) {
-  try {
-    doValidate(document);
-  } catch (err) {
-    connection.window.showErrorMessage(getErrorMessage(err, document));
-  }
+	try {
+		doValidate(document);
+	} catch (err) {
+		connection.window.showErrorMessage(getErrorMessage(err, document));
+	}
 }
 
 function getSyntax(language) {
-  switch (language) {
-    case 'less': {
-      return require('postcss-less');
-    }
-    case 'scss': {
-      return require('postcss-scss');
-    }
-    case 'sass-indented':
-    case 'sass':
-    case 'stylus': {
-      return require('sugarss');
-    }
-    default: {
-      return false;
-    }
-  }
+	switch (language) {
+		case 'less': {
+			return require('postcss-less');
+		}
+		case 'scss': {
+			return require('postcss-scss');
+		}
+		case 'sass-indented':
+		case 'sass':
+		case 'stylus': {
+			return require('sugarss');
+		}
+		default: {
+			return false;
+		}
+	}
 }
 
 function doValidate(document) {
-  const uri = document.uri;
-  const content = document.getText();
-  const diagnostics = [];
+	const uri = document.uri;
+	const content = document.getText();
+	const diagnostics = [];
 
-  const lang = document.languageId || document._languageId;
-  const syntax = getSyntax(lang);
+	const lang = document.languageId || document._languageId;
+	const syntax = getSyntax(lang);
 
-  if (settings.ignoreFiles.length) {
-    let fsPath = Files.uriToFilePath(uri);
-    if (rootFolder) {
-      fsPath = path.relative(rootFolder, fsPath);
-    }
+	if (settings.ignoreFiles.length) {
+		let fsPath = Files.uriToFilePath(uri);
+		if (rootFolder) {
+			fsPath = path.relative(rootFolder, fsPath);
+		}
 
-    const match = multimatch([fsPath], settings.ignoreFiles);
-    if (settings.ignoreFiles && match.length !== 0) {
-      return diagnostics;
-    }
-  }
+		const match = multimatch([fsPath], settings.ignoreFiles);
+		if (settings.ignoreFiles && match.length !== 0) {
+			return diagnostics;
+		}
+	}
 
-  const linterOptions = {
-    browsers: settings.browsers,
-    ignore: settings.ignore,
-    onFeatureUsage: (usageInfo) => diagnostics.push(makeDiagnostic(usageInfo))
-  };
+	const linterOptions = {
+		browsers: settings.browsers,
+		ignore: settings.ignore,
+		onFeatureUsage: (usageInfo) => diagnostics.push(makeDiagnostic(usageInfo))
+	};
 
-  postcss(linter(linterOptions))
-    .process(content, syntax && { syntax })
-    .then(() => {
-      connection.sendDiagnostics({ diagnostics, uri });
-    });
+	postcss(linter(linterOptions))
+		.process(content, syntax && { syntax })
+		.then(() => {
+			connection.sendDiagnostics({ diagnostics, uri });
+		});
 }
 
 connection.onInitialize((params) => {
-  rootFolder = params.rootPath;
-  return Files.resolveModule(rootFolder, 'doiuse')
-    .then((value) => {
-      linter = value;
+	rootFolder = params.rootPath;
 
-      return {
-        capabilities: {
-          textDocumentSync: documents.syncKind
-        }
-      };
-    })
-    .catch(() => {
-      return Promise.reject(new ResponseError(99, notFoundMessage, { retry: true }));
-    });
+	return resolve.resolveOne('doiuse', rootFolder).then((filepath) => {
+		connection.console.log(filepath);
+		if (filepath === undefined) {
+			return Promise.reject();
+		}
+
+		linter = require(filepath);
+
+		return {
+			capabilities: {
+				textDocumentSync: documents.syncKind
+			}
+		};
+	}).catch(() => {
+		return Promise.reject(new ResponseError(99, notFoundMessage, { retry: true }));
+	});
 });
 
 connection.onDidChangeConfiguration((params) => {
-  settings = params.settings.doiuse;
+	settings = params.settings.doiuse;
 
-  validateAllTextDocuments(documents.all());
+	validateAllTextDocuments(documents.all());
 });
 
 documents.onDidChangeContent((event) => {
-  if (settings) {
-    validateTextDocument(event.document);
-  }
+	if (settings) {
+		validateTextDocument(event.document);
+	}
 });
 
 documents.onDidClose((event) => connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] }));

@@ -1,6 +1,10 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-  "doiuse.enable": true,
-  "doiuse.browsers": ["ie >= 11"],
-  "doiuse.ignoreFiles": ["**/*.css"]
+	"doiuse.enable": true,
+	"doiuse.browsers": [
+		"ie >= 11"
+	],
+	"doiuse.ignoreFiles": [
+		"**/*.css"
+	]
 }
