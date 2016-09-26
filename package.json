@@ -67,23 +67,23 @@
     }
   },
   "devDependencies": {
-    "vscode": "^0.11.14",
-    "xo": "^0.16.0"
+    "vscode": "^1.0.0",
+    "xo": "0.16.0"
   },
   "dependencies": {
     "vscode-languageclient": "2.3.0",
     "vscode-languageserver": "2.2.1",
+    "npm-module-path": "2.0.0",
     "multimatch": "2.1.0",
     "postcss": "5.1.2",
-    "postcss-less": "0.14.0",
-    "postcss-scss": "0.2.1",
-    "sugarss": "0.1.5"
+    "postcss-less": "0.15.0",
+    "postcss-scss": "0.3.0",
+    "sugarss": "0.1.6"
   },
   "scripts": {
     "test": "xo"
   },
   "xo": {
-    "space": true,
     "rules": {
       "no-var": 2,
       "prefer-const": [2, { "destructuring": "all" }],
