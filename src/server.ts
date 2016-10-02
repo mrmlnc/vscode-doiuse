@@ -1,7 +1,6 @@
 'use strict';
 
 import * as path from 'path';
-import * as fs from 'fs';
 
 import {
 	IConnection,
@@ -30,7 +29,10 @@ let workspaceFolder;
 let linter;
 let editorSettings;
 
-const doiuseNotFound = `Failed to load doiuse library. Please install doiuse in your workspace folder using \'npm install doiuse\' or \'npm install -g doiuse\' and then press Retry.`;
+const doiuseNotFound: string = [
+	'Failed to load doiuse library.',
+	`Please install doiuse in your workspace folder using \'npm install doiuse\' or \'npm install -g doiuse\' and then press Retry.`
+].join('');
 
 function makeDiagnostic(problem): Diagnostic {
 	const source = problem.usage.source;
@@ -61,7 +63,7 @@ function makeDiagnostic(problem): Diagnostic {
 }
 
 function getErrorMessage(err, document): string {
-	let errorMessage: string = `unknown error`;
+	let errorMessage = 'unknown error';
 	if (typeof err.message === 'string' || err.message instanceof String) {
 		errorMessage = err.message;
 	}
@@ -93,20 +95,16 @@ function validateSingle(document: TextDocument): void {
 
 function getSyntax(language: string): any {
 	switch (language) {
-		case 'less': {
+		case 'less':
 			return require('postcss-less');
-		}
-		case 'scss': {
+		case 'scss':
 			return require('postcss-scss');
-		}
 		case 'sass-indented':
 		case 'sass':
-		case 'stylus': {
+		case 'stylus':
 			return require('sugarss');
-		}
-		default: {
+		default:
 			return false;
-		}
 	}
 }
 
