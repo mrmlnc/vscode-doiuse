@@ -71,7 +71,7 @@ function getErrorMessage(err, document): string {
 	return `vscode-doiuse: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
 }
 
-function validateMany(documents: TextDocument[]) {
+function validateMany(documents: TextDocument[]): void {
 	const tracker = new ErrorMessageTracker();
 	documents.forEach((document) => {
 		try {
@@ -83,7 +83,7 @@ function validateMany(documents: TextDocument[]) {
 	tracker.sendErrors(connection);
 }
 
-function validateSingle(document: TextDocument) {
+function validateSingle(document: TextDocument): void {
 	try {
 		doValidate(document);
 	} catch (err) {
@@ -110,7 +110,7 @@ function getSyntax(language: string): any {
 	}
 }
 
-function doValidate(document: TextDocument) {
+function doValidate(document: TextDocument): any {
 	const uri = document.uri;
 	const content: string = document.getText();
 	const diagnostics = [];
