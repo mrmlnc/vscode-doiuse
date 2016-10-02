@@ -9,7 +9,7 @@
 Linter installation is performed in several stages:
 
   1. Install **doiuse** use `npm i -D doiuse` or `npm i -g doiuse`.
-  2. Press `F1` and select `Extensions: Install Extensions`.
+  2. Press <kbd>F1</kbd> and select `Extensions: Install Extensions`.
   3. Search and choose `vscode-doiuse`.
 
 See the [extension installation guide](https://code.visualstudio.com/docs/editor/extension-gallery) for details.
@@ -27,7 +27,7 @@ Enable the linter in the VS Code [settings](https://code.visualstudio.com/docs/c
 ## Supported languages
 
   * CSS
-  * Less (experimental support)
+  * Less
   * SCSS
   * Sass (experimental and by [sass-indented](https://marketplace.visualstudio.com/items?itemName=robinbentley.sass-indented))
   * Stylus (experimental, only indent-based CSS syntax and by [extensions](https://marketplace.visualstudio.com/search?term=stylu&target=VSCode&sortBy=Relevance))
@@ -72,6 +72,14 @@ An optional array of features to ignore. See the [official repository](https://g
   * Example: `["**/*.css"]`
 
 An optional array of file globs to match against original source file path, to ignore. See the [official repository](https://github.com/anandthakker/doiuse) for details.
+
+**doiuse.run**
+
+  * Type: `String`
+  * Default: `onType`
+  * Supported values: `onType`, `onSave`
+
+Run the linter on save (onSave) or on type (onType).
 
 ## Changelog
 
