@@ -44,7 +44,11 @@
         },
         "doiuse.messageLevel": {
           "type": "string",
-          "enum": ["Information", "Warning", "Error"],
+          "enum": [
+            "Information",
+            "Warning",
+            "Error"
+          ],
           "default": "Warning",
           "description": "Represents a diagnostic level, such as a Information, Warning or Error."
         },
@@ -65,7 +69,10 @@
         },
         "doiuse.run": {
           "type": "string",
-          "enum": ["onSave", "onType"],
+          "enum": [
+            "onSave",
+            "onType"
+          ],
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)."
         }
@@ -73,19 +80,20 @@
     }
   },
   "devDependencies": {
-    "vscode": "^1.0.5",
+    "tslint": "^4.5.1",
+    "tslint-config-xo": "^1.1.0",
     "typescript": "^2.2.1",
-    "tslint": "^4.5.1"
+    "vscode": "^1.0.5"
   },
   "dependencies": {
-    "vscode-languageclient": "3.1.0",
-    "vscode-languageserver": "3.1.0",
-    "npm-module-path": "2.0.2",
     "multimatch": "2.1.0",
+    "npm-module-path": "2.0.2",
     "postcss": "5.2.15",
     "postcss-less": "0.15.0",
     "postcss-scss": "0.4.1",
-    "sugarss": "0.2.0"
+    "sugarss": "0.2.0",
+    "vscode-languageclient": "3.1.0",
+    "vscode-languageserver": "3.1.0"
   },
   "scripts": {
     "postinstall": "node ./node_modules/vscode/bin/install",
