@@ -142,7 +142,7 @@ function doValidate(document: TextDocument): any {
 }
 
 // The documents manager listen for text document create, change
-// and close on the connection
+// _and close on the connection
 allDocuments.listen(connection);
 
 // A text document has changed. Validate the document.
