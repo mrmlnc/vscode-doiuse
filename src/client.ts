@@ -17,7 +17,11 @@ export function activate(context: ExtensionContext) {
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: ['css', 'less', 'stylus', 'scss', 'sass', 'sass-indented'],
 		synchronize: {
-			configurationSection: 'doiuse'
+			configurationSection: 'doiuse',
+			fileEvents: [
+				workspace.createFileSystemWatcher('**/package.json'),
+				workspace.createFileSystemWatcher('**/browserslist')
+			]
 		},
 		diagnosticCollectionName: 'doiuse',
 		initializationOptions: workspace.getConfiguration('doiuse')

@@ -19,7 +19,8 @@ import {
 
 import * as postcss from 'postcss';
 import * as micromatch from 'micromatch';
-import * as resolver from 'npm-module-path';
+import * as moduleResolver from 'npm-module-path';
+import ConfigResolver, { IConfig, IOptions } from 'vscode-config-resolver';
 
 const connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
 const allDocuments: TextDocuments = new TextDocuments();
@@ -28,6 +29,11 @@ const allDocuments: TextDocuments = new TextDocuments();
 let workspaceFolder;
 let linter;
 let editorSettings;
+
+// "config"
+let configResolver;
+let needUpdateConfig = true;
+let browserConfig: any = [];
 
 const doiuseNotFound: string = [
 	'Failed to load doiuse library.',
@@ -108,6 +114,44 @@ function getSyntax(language: string): any {
 	}
 }
 
+function browsersListParser(data: string): string[] {
+	const lines = data.replace(/#.*(?:\n|\r\n)/g, '').split(/\r?\n/);
+
+	const browsers: string[] = [];
+	lines.forEach((line) => {
+		if (line !== '') {
+			browsers.push(line.trim());
+		}
+	});
+
+	return browsers;
+}
+
+function getConfig(documentFsPath): Promise<string[]> {
+	const configResolverOptions: IOptions = {
+		packageProp: 'browserslist',
+		configFiles: [
+			'browserslist'
+		],
+		editorSettings: editorSettings.browsers || null,
+		parsers: [
+			{ pattern: /.*list$/, parser: browsersListParser }
+		]
+	};
+
+	if (!needUpdateConfig) {
+		return Promise.resolve(browserConfig);
+	}
+
+	return configResolver.scan(documentFsPath, configResolverOptions).then((config: IConfig) => {
+		if (config.from === 'settings') {
+			browserConfig = (<any>config.json).browsers || [];
+		}
+		browserConfig = config.json;
+		needUpdateConfig = false;
+	});
+}
+
 function doValidate(document: TextDocument): any {
 	const uri = document.uri;
 	const content: string = document.getText();
@@ -116,8 +160,8 @@ function doValidate(document: TextDocument): any {
 	const lang: string = document.languageId;
 	const syntax = getSyntax(lang);
 
+	let fsPath: string = Files.uriToFilePath(uri);
 	if (editorSettings.ignoreFiles.length) {
-		let fsPath: string = Files.uriToFilePath(uri);
 		if (workspaceFolder) {
 			fsPath = path.relative(workspaceFolder, fsPath);
 		}
@@ -128,17 +172,19 @@ function doValidate(document: TextDocument): any {
 		}
 	}
 
-	const linterOptions = {
-		browsers: editorSettings.browsers,
-		ignore: editorSettings.ignore,
-		onFeatureUsage: (usageInfo) => diagnostics.push(makeDiagnostic(usageInfo))
-	};
+	getConfig(fsPath).then(() => {
+		const linterOptions = {
+			browsers: browserConfig,
+			ignore: editorSettings.ignore,
+			onFeatureUsage: (usageInfo) => diagnostics.push(makeDiagnostic(usageInfo))
+		};
 
-	postcss(linter(linterOptions))
-		.process(content, syntax && { syntax })
-		.then(() => {
-			connection.sendDiagnostics({ diagnostics, uri });
-		});
+		postcss(linter(linterOptions))
+			.process(content, syntax && { syntax })
+			.then(() => {
+				connection.sendDiagnostics({ diagnostics, uri });
+			});
+	});
 }
 
 // The documents manager listen for text document create, change
@@ -161,7 +207,9 @@ allDocuments.onDidSave((event) => {
 connection.onInitialize((params) => {
 	workspaceFolder = params.rootPath;
 
-	return resolver.resolveOne('doiuse', workspaceFolder).then((modulePath) => {
+	configResolver = new ConfigResolver(workspaceFolder);
+
+	return moduleResolver.resolveOne('doiuse', workspaceFolder).then((modulePath) => {
 		if (modulePath === undefined) {
 			throw {
 				message: 'Module not found.',
@@ -191,6 +239,13 @@ connection.onInitialize((params) => {
 
 connection.onDidChangeConfiguration((params) => {
 	editorSettings = params.settings.doiuse;
+
+	validateMany(allDocuments.all());
+});
+
+connection.onDidChangeWatchedFiles(() => {
+	console.log('update');
+	needUpdateConfig = true;
 
 	validateMany(allDocuments.all());
 });

@@ -94,6 +94,7 @@
     "postcss-less": "0.15.0",
     "postcss-scss": "0.4.1",
     "sugarss": "0.2.0",
+    "vscode-config-resolver": "^1.0.3",
     "vscode-languageclient": "3.1.0",
     "vscode-languageserver": "3.1.0"
   },
