@@ -80,13 +80,15 @@
     }
   },
   "devDependencies": {
+    "@types/micromatch": "^2.3.29",
+    "@types/node": "^7.0.5",
     "tslint": "^4.5.1",
     "tslint-config-xo": "^1.1.0",
     "typescript": "^2.2.1",
     "vscode": "^1.0.5"
   },
   "dependencies": {
-    "multimatch": "2.1.0",
+    "micromatch": "2.3.11",
     "npm-module-path": "2.0.2",
     "postcss": "5.2.15",
     "postcss-less": "0.15.0",

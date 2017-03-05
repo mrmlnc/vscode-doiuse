@@ -18,7 +18,7 @@ import {
 } from 'vscode-languageserver';
 
 import * as postcss from 'postcss';
-import * as multimatch from 'multimatch';
+import * as micromatch from 'micromatch';
 import * as resolver from 'npm-module-path';
 
 const connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -122,7 +122,7 @@ function doValidate(document: TextDocument): any {
 			fsPath = path.relative(workspaceFolder, fsPath);
 		}
 
-		const match = multimatch([fsPath], editorSettings.ignoreFiles);
+		const match = micromatch([fsPath], editorSettings.ignoreFiles);
 		if (editorSettings.ignoreFiles && match.length !== 0) {
 			return diagnostics;
 		}
