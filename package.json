@@ -73,19 +73,19 @@
     }
   },
   "devDependencies": {
-    "vscode": "^1.0.0",
-    "typescript": "^2.0.3",
-    "tslint": "^3.15.1"
+    "vscode": "^1.0.5",
+    "typescript": "^2.2.1",
+    "tslint": "^4.5.1"
   },
   "dependencies": {
-    "vscode-languageclient": "2.5.0",
-    "vscode-languageserver": "2.5.1",
-    "npm-module-path": "2.0.0",
+    "vscode-languageclient": "3.1.0",
+    "vscode-languageserver": "3.1.0",
+    "npm-module-path": "2.0.2",
     "multimatch": "2.1.0",
-    "postcss": "5.1.2",
+    "postcss": "5.2.15",
     "postcss-less": "0.15.0",
-    "postcss-scss": "0.3.1",
-    "sugarss": "0.1.6"
+    "postcss-scss": "0.4.1",
+    "sugarss": "0.2.0"
   },
   "scripts": {
     "test": "tslint src/**/*.ts",
