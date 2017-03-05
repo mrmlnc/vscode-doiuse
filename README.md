@@ -4,6 +4,14 @@
 
 ![doiuse](https://cloud.githubusercontent.com/assets/7034281/16776880/0282e982-4870-11e6-811f-a2a65cbc4eb7.png)
 
+## Donate
+
+If you want to thank me, or promote your Issue.
+
+[![Gratipay User](https://img.shields.io/gratipay/user/mrmlnc.svg?style=flat-square)](https://gratipay.com/~mrmlnc)
+
+> Sorry, but I have work and support for plugins requires some time after work. I will be glad of your support.
+
 ## Install
 
 Linter installation is performed in several stages:
