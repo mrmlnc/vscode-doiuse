@@ -26,12 +26,12 @@ const connection: IConnection = createConnection(new IPCMessageReader(process), 
 const allDocuments: TextDocuments = new TextDocuments();
 
 // "global" settings
-let workspaceFolder;
-let linter;
-let editorSettings;
+let workspaceFolder: string;
+let linter: any;
+let editorSettings: any;
 
 // "config"
-let configResolver;
+let configResolver: ConfigResolver;
 let needUpdateConfig = true;
 let browserConfig: any = [];
 
@@ -40,18 +40,20 @@ const doiuseNotFound: string = [
 	`Please install doiuse in your workspace folder using \'npm install doiuse\' or \'npm install -g doiuse\' and then press Retry.`
 ].join('');
 
-function makeDiagnostic(problem): Diagnostic {
+function makeDiagnostic(problem: any): Diagnostic {
 	const source = problem.usage.source;
 	const message: string = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
 
-	const severityLevel = {
+	const severityLevel = <any>{
 		Error: DiagnosticSeverity.Error,
 		Information: DiagnosticSeverity.Information,
 		Warning: DiagnosticSeverity.Warning
 	};
 
+	const level: string = editorSettings.messageLevel;
+
 	return {
-		severity: severityLevel[editorSettings.messageLevel],
+		severity: severityLevel[level],
 		message,
 		range: {
 			start: {
@@ -68,7 +70,7 @@ function makeDiagnostic(problem): Diagnostic {
 	};
 }
 
-function getErrorMessage(err, document): string {
+function getErrorMessage(err: Error, document: TextDocument): string {
 	let errorMessage = 'unknown error';
 	if (typeof err.message === 'string' || err.message instanceof String) {
 		errorMessage = err.message;
@@ -127,7 +129,7 @@ function browsersListParser(data: string): string[] {
 	return browsers;
 }
 
-function getConfig(documentFsPath): Promise<string[]> {
+function getConfig(documentFsPath: string): Promise<string[]> {
 	const configResolverOptions: IOptions = {
 		packageProp: 'browserslist',
 		configFiles: [
@@ -149,13 +151,15 @@ function getConfig(documentFsPath): Promise<string[]> {
 		}
 		browserConfig = config.json;
 		needUpdateConfig = false;
+
+		return [];
 	});
 }
 
 function doValidate(document: TextDocument): any {
 	const uri = document.uri;
 	const content: string = document.getText();
-	const diagnostics = [];
+	const diagnostics: Diagnostic[] = [];
 
 	const lang: string = document.languageId;
 	const syntax = getSyntax(lang);
@@ -176,7 +180,7 @@ function doValidate(document: TextDocument): any {
 		const linterOptions = {
 			browsers: browserConfig,
 			ignore: editorSettings.ignore,
-			onFeatureUsage: (usageInfo) => diagnostics.push(makeDiagnostic(usageInfo))
+			onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
 		};
 
 		postcss(linter(linterOptions))
@@ -224,16 +228,18 @@ connection.onInitialize((params) => {
 				textDocumentSync: allDocuments.syncKind
 			}
 		};
-	}).catch((err) => {
+	}).catch((err: any) => {
 		// If the error is not caused by a lack of module
 		if (err.code !== 'ENOENT') {
 			connection.console.error(err.toString());
-			return;
+			return null;
 		}
 
 		if (params.initializationOptions && Object.keys(params.initializationOptions).length !== 0) {
 			return Promise.reject(new ResponseError<InitializeError>(99, doiuseNotFound, { retry: true }));
 		}
+
+		return null;
 	});
 });
 
