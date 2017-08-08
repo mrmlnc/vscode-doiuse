@@ -2,7 +2,7 @@
   "name": "vscode-doiuse",
   "displayName": "doiuse",
   "description": "Lint CSS for browser support against caniuse database.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "publisher": "mrmlnc",
   "license": "MIT",
   "engines": {
