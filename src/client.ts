@@ -20,6 +20,7 @@ export function activate(context: ExtensionContext) {
 			configurationSection: 'doiuse',
 			fileEvents: [
 				workspace.createFileSystemWatcher('**/package.json'),
+				workspace.createFileSystemWatcher('**/.browserslistrc'),
 				workspace.createFileSystemWatcher('**/browserslist')
 			]
 		},

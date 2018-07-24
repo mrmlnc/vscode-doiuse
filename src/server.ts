@@ -133,11 +133,12 @@ function getConfig(documentFsPath: string): Promise<string[]> {
 	const configResolverOptions: IOptions = {
 		packageProp: 'browserslist',
 		configFiles: [
+            '.browserslistrc',
 			'browserslist'
 		],
 		editorSettings: editorSettings.browsers || null,
 		parsers: [
-			{ pattern: /.*list$/, parser: browsersListParser }
+			{ pattern: /\.?browserslist(rc)?$/, parser: browsersListParser }
 		]
 	};
 
