@@ -72,7 +72,7 @@ function makeDiagnostic(problem: any): Diagnostic {
 
 function getErrorMessage(err: Error, document: TextDocument): string {
 	let errorMessage = 'unknown error';
-	if (typeof err.message === 'string' || err.message instanceof String) {
+	if (typeof err.message === 'string' || <any>err.message instanceof String) {
 		errorMessage = err.message;
 	}
 
