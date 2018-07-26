@@ -126,6 +126,7 @@ function browsersListParser(data: string): string[] {
 		}
 	});
 
+	connection.console.info(`The following browser scope has been detected: ${browsers.join(', ')}`);
 	return browsers;
 }
 
@@ -176,19 +177,20 @@ function doValidate(document: TextDocument): any {
 		}
 	}
 
-	getConfig(fsPath).then(() => {
-		const linterOptions = {
-			browsers: browserConfig,
-			ignore: editorSettings.ignore,
-			onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
-		};
+	getConfig(fsPath)
+		.then(() => {
+			const linterOptions = {
+				browsers: browserConfig,
+				ignore: editorSettings.ignore,
+				onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
+			};
 
-		postcss(linter(linterOptions))
-			.process(content, syntax && { syntax })
-			.then(() => {
-				connection.sendDiagnostics({ diagnostics, uri });
-			});
-	});
+			postcss(linter(linterOptions))
+				.process(content, syntax && { syntax })
+				.then(() => {
+					connection.sendDiagnostics({ diagnostics, uri });
+				});
+		});
 }
 
 // The documents manager listen for text document create, change
@@ -250,7 +252,6 @@ connection.onDidChangeConfiguration((params) => {
 });
 
 connection.onDidChangeWatchedFiles(() => {
-	console.log('update');
 	needUpdateConfig = true;
 
 	validateMany(allDocuments.all());
