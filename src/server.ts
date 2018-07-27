@@ -1,6 +1,9 @@
 'use strict';
 
 import * as path from 'path';
+import * as postcss from 'postcss';
+import * as micromatch from 'micromatch';
+import * as moduleResolver from 'npm-module-path';
 
 import {
 	IConnection,
@@ -15,14 +18,20 @@ import {
 	ErrorMessageTracker,
 	InitializeError,
 	ResponseError
+
 } from 'vscode-languageserver';
 
-import * as postcss from 'postcss';
-import * as micromatch from 'micromatch';
-import * as moduleResolver from 'npm-module-path';
-import ConfigResolver, { IConfig, IOptions } from 'vscode-config-resolver';
+import ConfigResolver, {
+	IConfig,
+	IOptions
 
-const connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
+} from 'vscode-config-resolver';
+
+const connection: IConnection = createConnection(
+	new IPCMessageReader(process),
+	new IPCMessageWriter(process)
+);
+
 const allDocuments: TextDocuments = new TextDocuments();
 
 // "global" settings
@@ -38,19 +47,19 @@ let browserConfig: any = [];
 const doiuseNotFound: string = [
 	'Failed to load doiuse library.',
 	`Please install doiuse in your workspace folder using \'npm install doiuse\' or \'npm install -g doiuse\' and then press Retry.`
+
 ].join('');
 
 function makeDiagnostic(problem: any): Diagnostic {
 	const source = problem.usage.source;
 	const message: string = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
+	const level: string = editorSettings.messageLevel;
 
 	const severityLevel = <any>{
 		Error: DiagnosticSeverity.Error,
 		Information: DiagnosticSeverity.Information,
 		Warning: DiagnosticSeverity.Warning
 	};
-
-	const level: string = editorSettings.messageLevel;
 
 	return {
 		severity: severityLevel[level],
@@ -71,12 +80,12 @@ function makeDiagnostic(problem: any): Diagnostic {
 }
 
 function getErrorMessage(err: Error, document: TextDocument): string {
+	const fsPath: string = Files.uriToFilePath(document.uri);
 	let errorMessage = 'unknown error';
+
 	if (typeof err.message === 'string' || <any>err.message instanceof String) {
 		errorMessage = err.message;
 	}
-
-	const fsPath: string = Files.uriToFilePath(document.uri);
 
 	return `vscode-doiuse: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
 }
@@ -146,8 +155,10 @@ function getConfig(documentFsPath: string): Promise<string[]> {
 		return Promise.resolve(browserConfig);
 	}
 
-	return configResolver.scan(documentFsPath, configResolverOptions).then((config: IConfig) => {
-		if (config.from === 'settings') {
+	return configResolver
+		.scan(documentFsPath, configResolverOptions)
+		.then((config: IConfig) => {
+			if (config && config.from === 'settings') {
 			browserConfig = (<any>config.json).browsers || [];
 		}
 		browserConfig = config.json;
@@ -215,7 +226,9 @@ connection.onInitialize((params) => {
 
 	configResolver = new ConfigResolver(workspaceFolder);
 
-	return moduleResolver.resolveOne('doiuse', workspaceFolder).then((modulePath) => {
+	return moduleResolver
+		.resolveOne('doiuse', workspaceFolder)
+		.then((modulePath) => {
 		if (modulePath === undefined) {
 			throw {
 				message: 'Module not found.',
@@ -230,7 +243,8 @@ connection.onInitialize((params) => {
 				textDocumentSync: allDocuments.syncKind
 			}
 		};
-	}).catch((err: any) => {
+		})
+		.catch((err: any) => {
 		// If the error is not caused by a lack of module
 		if (err.code !== 'ENOENT') {
 			connection.console.error(err.toString());
