@@ -90,24 +90,28 @@ function getErrorMessage(err: Error, document: TextDocument): string {
 	return `vscode-doiuse: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
 }
 
-function validateMany(documents: TextDocument[]): void {
-	const tracker = new ErrorMessageTracker();
-	documents.forEach((document) => {
-		try {
-			validateSingle(document);
-		} catch (err) {
-			tracker.add(getErrorMessage(err, document));
-		}
-	});
-	tracker.sendErrors(connection);
+function validateSingle(document: TextDocument): void {
+	doValidate(document)
+		.catch((err: Error) => {
+			connection.window.showErrorMessage(getErrorMessage(err, document));
+		});
 }
 
-function validateSingle(document: TextDocument): void {
-	try {
-		doValidate(document);
-	} catch (err) {
-		connection.window.showErrorMessage(getErrorMessage(err, document));
-	}
+function validateMany(documents: TextDocument[]): void {
+	const tracker = new ErrorMessageTracker();
+
+	Promise
+		.all(
+			documents.map((document) =>
+				doValidate(document)
+					.catch((err: Error) => {
+						tracker.add(getErrorMessage(err, document));
+					})
+			)
+		)
+		.then(() => {
+			tracker.sendErrors(connection);
+		});
 }
 
 function getSyntax(language: string): any {
@@ -159,13 +163,14 @@ function getConfig(documentFsPath: string): Promise<string[]> {
 		.scan(documentFsPath, configResolverOptions)
 		.then((config: IConfig) => {
 			if (config && config.from === 'settings') {
-			browserConfig = (<any>config.json).browsers || [];
-		}
-		browserConfig = config.json;
-		needUpdateConfig = false;
+				browserConfig = (<any>config.json).browsers || [];
+			}
 
-		return [];
-	});
+			browserConfig = config.json;
+			needUpdateConfig = false;
+
+			return [];
+		});
 }
 
 function doValidate(document: TextDocument): any {
@@ -188,7 +193,7 @@ function doValidate(document: TextDocument): any {
 		}
 	}
 
-	getConfig(fsPath)
+	return getConfig(fsPath)
 		.then(() => {
 			const linterOptions = {
 				browsers: browserConfig,
@@ -200,6 +205,9 @@ function doValidate(document: TextDocument): any {
 				.process(content, syntax && { syntax })
 				.then(() => {
 					connection.sendDiagnostics({ diagnostics, uri });
+				})
+				.catch((err: Error) => {
+					connection.console.error(err.toString());
 				});
 		});
 }
@@ -229,34 +237,34 @@ connection.onInitialize((params) => {
 	return moduleResolver
 		.resolveOne('doiuse', workspaceFolder)
 		.then((modulePath) => {
-		if (modulePath === undefined) {
-			throw {
-				message: 'Module not found.',
-				code: 'ENOENT'
-			};
-		}
-
-		linter = require(modulePath);
-
-		return {
-			capabilities: {
-				textDocumentSync: allDocuments.syncKind
+			if (modulePath === undefined) {
+				throw {
+					message: 'Module not found.',
+					code: 'ENOENT'
+				};
 			}
-		};
+
+			linter = require(modulePath);
+
+			return {
+				capabilities: {
+					textDocumentSync: allDocuments.syncKind
+				}
+			};
 		})
-		.catch((err: any) => {
-		// If the error is not caused by a lack of module
-		if (err.code !== 'ENOENT') {
-			connection.console.error(err.toString());
+		.catch((err: Error) => {
+			// If the error is not caused by a lack of module
+			if ((<any>err).code !== 'ENOENT') {
+				connection.console.error(err.toString());
+				return null;
+			}
+
+			if (params.initializationOptions && Object.keys(params.initializationOptions).length !== 0) {
+				return Promise.reject(new ResponseError<InitializeError>(99, doiuseNotFound, { retry: true }));
+			}
+
 			return null;
-		}
-
-		if (params.initializationOptions && Object.keys(params.initializationOptions).length !== 0) {
-			return Promise.reject(new ResponseError<InitializeError>(99, doiuseNotFound, { retry: true }));
-		}
-
-		return null;
-	});
+		});
 });
 
 connection.onDidChangeConfiguration((params) => {
@@ -272,7 +280,10 @@ connection.onDidChangeWatchedFiles(() => {
 });
 
 allDocuments.onDidClose((event) => {
-	connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] });
+	connection.sendDiagnostics({
+		uri: event.document.uri,
+		diagnostics: []
+	});
 });
 
 connection.listen();
