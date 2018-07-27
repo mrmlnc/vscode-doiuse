@@ -139,7 +139,6 @@ function browsersListParser(data: string): string[] {
 		}
 	});
 
-	connection.console.info(`The following browser scope has been detected: ${browsers.join(', ')}`);
 	return browsers;
 }
 
@@ -165,6 +164,7 @@ function getBrowsersList(documentFsPath: string): Promise<string[]> {
 			browsersListCache = <string[]>config.json;
 			needUpdateConfig = false;
 
+			connection.console.info(`The following browser scope has been detected: ${browsersListCache.join(', ')}`);
 			return browsersListCache;
 		});
 }
