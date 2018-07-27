@@ -90,30 +90,6 @@ function getErrorMessage(err: Error, document: TextDocument): string {
 	return `vscode-doiuse: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
 }
 
-function validateSingle(document: TextDocument): void {
-	doValidate(document)
-		.catch((err: Error) => {
-			connection.window.showErrorMessage(getErrorMessage(err, document));
-		});
-}
-
-function validateMany(documents: TextDocument[]): void {
-	const tracker = new ErrorMessageTracker();
-
-	Promise
-		.all(
-			documents.map((document) =>
-				doValidate(document)
-					.catch((err: Error) => {
-						tracker.add(getErrorMessage(err, document));
-					})
-			)
-		)
-		.then(() => {
-			tracker.sendErrors(connection);
-		});
-}
-
 function getSyntax(language: string): any {
 	switch (language) {
 		case 'less':
@@ -169,7 +145,7 @@ function getBrowsersList(documentFsPath: string): Promise<string[]> {
 		});
 }
 
-function doValidate(document: TextDocument): any {
+function validateDocument(document: TextDocument): any {
 	const uri = document.uri;
 	const content: string = document.getText();
 	const diagnostics: Diagnostic[] = [];
@@ -208,22 +184,22 @@ function doValidate(document: TextDocument): any {
 		});
 }
 
-// The documents manager listen for text document create, change
-// _and close on the connection
-allDocuments.listen(connection);
+function validate(documents: TextDocument[]): void {
+	const tracker = new ErrorMessageTracker();
 
-// A text document has changed. Validate the document.
-allDocuments.onDidChangeContent((event) => {
-	if (editorSettings.run === 'onType') {
-		validateSingle(event.document);
-	}
-});
-
-allDocuments.onDidSave((event) => {
-	if (editorSettings.run === 'onSave') {
-		validateSingle(event.document);
-	}
-});
+	Promise
+		.all(
+			documents.map((document) =>
+				validateDocument(document)
+					.catch((err: Error) => {
+						tracker.add(getErrorMessage(err, document));
+					})
+			)
+		)
+		.then(() => {
+			tracker.sendErrors(connection);
+		});
+}
 
 connection.onInitialize((params) => {
 	workspaceFolder = params.rootPath;
@@ -266,13 +242,30 @@ connection.onInitialize((params) => {
 connection.onDidChangeConfiguration((params) => {
 	editorSettings = params.settings.doiuse;
 
-	validateMany(allDocuments.all());
+	validate(allDocuments.all());
 });
 
 connection.onDidChangeWatchedFiles(() => {
 	needUpdateConfig = true;
 
-	validateMany(allDocuments.all());
+	validate(allDocuments.all());
+});
+
+// The documents manager listen for text document create,
+// change and close on the connection
+allDocuments.listen(connection);
+
+// A text document has changed. Validate the document.
+allDocuments.onDidChangeContent((event) => {
+	if (editorSettings.run === 'onType') {
+		validate([event.document]);
+	}
+});
+
+allDocuments.onDidSave((event) => {
+	if (editorSettings.run === 'onSave') {
+		validate([event.document]);
+	}
 });
 
 allDocuments.onDidClose((event) => {
