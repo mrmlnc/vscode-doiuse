@@ -42,7 +42,7 @@ let editorSettings: any;
 // "config"
 let configResolver: ConfigResolver;
 let needUpdateConfig = true;
-let browserScope: string[] = [];
+let browserScopeCache: string[] = [];
 
 const doiuseNotFound: string = [
 	'Failed to load doiuse library.',
@@ -156,16 +156,16 @@ function getConfig(documentFsPath: string): Promise<string[]> {
 	};
 
 	if (!needUpdateConfig) {
-		return Promise.resolve(browserScope);
+		return Promise.resolve(browserScopeCache);
 	}
 
 	return configResolver
 		.scan(documentFsPath, configResolverOptions)
 		.then((config: IConfig) => {
-			browserScope = <string[]>config.json;
+			browserScopeCache = <string[]>config.json;
 			needUpdateConfig = false;
 
-			return [];
+			return browserScopeCache;
 		});
 }
 
@@ -190,7 +190,7 @@ function doValidate(document: TextDocument): any {
 	}
 
 	return getConfig(fsPath)
-		.then(() => {
+		.then((browserScope) => {
 			const linterOptions = {
 				browsers: browserScope,
 				ignore: editorSettings.ignore,
