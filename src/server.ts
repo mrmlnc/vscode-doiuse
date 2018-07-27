@@ -164,8 +164,14 @@ function validateDocument(document: TextDocument): any {
 		.then((browsersList) => {
 			const linterOptions = {
 				browsers: browsersList,
+<<<<<<< HEAD
 				ignore: workspaceSettings.ignore,
 				onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
+=======
+				ignore: editorSettings.ignore,
+				onFeatureUsage: (usageInfo: any) =>
+					diagnostics.push(makeDiagnostic(usageInfo))
+>>>>>>> Remove comments that have no additional value
 			};
 
 			postcss(linter(linterOptions))
@@ -196,7 +202,6 @@ function validate(documents: TextDocument[]): void {
 
 connection.onInitialize((params) => {
 	workspaceFolder = params.rootPath;
-
 	configResolver = new ConfigResolver(workspaceFolder);
 
 	return moduleResolver
