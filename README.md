@@ -65,6 +65,8 @@ Represents a diagnostic level, such as a Information, Warning or Error.
 
 An autoprefixer-like array of browsers. See the [official repository](https://github.com/anandthakker/doiuse) for details.
 
+Through the config files of _browserslist_, it is also possible to define the scope per folder, however, the above VSCode setting has priority over these files.
+
 **doiuse.ignore**
 
   * Type: `Array`
