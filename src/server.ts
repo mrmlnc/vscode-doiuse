@@ -36,8 +36,8 @@ const allDocuments: TextDocuments = new TextDocuments();
 
 // "global" settings
 let workspaceFolder: string;
+let workspaceSettings: any;
 let linter: any;
-let editorSettings: any;
 
 // "config"
 let configResolver: ConfigResolver;
@@ -53,7 +53,7 @@ const doiuseNotFound: string = [
 function makeDiagnostic(problem: any): Diagnostic {
 	const source = problem.usage.source;
 	const message: string = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
-	const level: string = editorSettings.messageLevel;
+	const level: string = workspaceSettings.messageLevel;
 
 	const severityLevel = <any>{
 		Error: DiagnosticSeverity.Error,
@@ -119,7 +119,7 @@ function getBrowsersList(documentFsPath: string): Promise<string[]> {
 		configFiles: [
 			'browserslist'
 		],
-		editorSettings: editorSettings.browsers || null,
+		editorSettings: workspaceSettings.browsers || null,
 		parsers: [
 			{ pattern: /.*list$/, parser: browsersListParser }
 		]
@@ -149,13 +149,13 @@ function validateDocument(document: TextDocument): any {
 	const syntax = getSyntax(lang);
 
 	let fsPath: string = Files.uriToFilePath(uri);
-	if (editorSettings.ignoreFiles.length) {
+	if (workspaceSettings.ignoreFiles.length) {
 		if (workspaceFolder) {
 			fsPath = path.relative(workspaceFolder, fsPath);
 		}
 
-		const match = micromatch([fsPath], editorSettings.ignoreFiles);
-		if (editorSettings.ignoreFiles && match.length !== 0) {
+		const match = micromatch([fsPath], workspaceSettings.ignoreFiles);
+		if (workspaceSettings.ignoreFiles && match.length !== 0) {
 			return diagnostics;
 		}
 	}
@@ -164,7 +164,7 @@ function validateDocument(document: TextDocument): any {
 		.then((browsersList) => {
 			const linterOptions = {
 				browsers: browsersList,
-				ignore: editorSettings.ignore,
+				ignore: workspaceSettings.ignore,
 				onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
 			};
 
@@ -233,7 +233,7 @@ connection.onInitialize((params) => {
 });
 
 connection.onDidChangeConfiguration((params) => {
-	editorSettings = params.settings.doiuse;
+	workspaceSettings = params.settings.doiuse;
 
 	validate(allDocuments.all());
 });
@@ -247,13 +247,13 @@ connection.onDidChangeWatchedFiles(() => {
 allDocuments.listen(connection);
 
 allDocuments.onDidChangeContent((event) => {
-	if (editorSettings.run === 'onType') {
+	if (workspaceSettings.run === 'onType') {
 		validate([event.document]);
 	}
 });
 
 allDocuments.onDidSave((event) => {
-	if (editorSettings.run === 'onSave') {
+	if (workspaceSettings.run === 'onSave') {
 		validate([event.document]);
 	}
 });
