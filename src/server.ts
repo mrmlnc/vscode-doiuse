@@ -233,6 +233,7 @@ connection.onInitialize((params) => {
 });
 
 connection.onDidChangeConfiguration((params) => {
+	needUpdateConfig = true;
 	workspaceSettings = params.settings.doiuse;
 
 	validate(allDocuments.all());
