@@ -162,10 +162,6 @@ function getConfig(documentFsPath: string): Promise<string[]> {
 	return configResolver
 		.scan(documentFsPath, configResolverOptions)
 		.then((config: IConfig) => {
-			if (config && config.from === 'settings') {
-				browserScope = (<any>config.json).browsers || [];
-			}
-
 			browserScope = <string[]>config.json;
 			needUpdateConfig = false;
 
