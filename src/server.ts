@@ -42,7 +42,7 @@ let editorSettings: any;
 // "config"
 let configResolver: ConfigResolver;
 let needUpdateConfig = true;
-let browserScopeCache: string[] = [];
+let browsersListCache: string[] = [];
 
 const doiuseNotFound: string = [
 	'Failed to load doiuse library.',
@@ -143,7 +143,7 @@ function browsersListParser(data: string): string[] {
 	return browsers;
 }
 
-function getConfig(documentFsPath: string): Promise<string[]> {
+function getBrowsersList(documentFsPath: string): Promise<string[]> {
 	const configResolverOptions: IOptions = {
 		packageProp: 'browserslist',
 		configFiles: [
@@ -156,16 +156,16 @@ function getConfig(documentFsPath: string): Promise<string[]> {
 	};
 
 	if (!needUpdateConfig) {
-		return Promise.resolve(browserScopeCache);
+		return Promise.resolve(browsersListCache);
 	}
 
 	return configResolver
 		.scan(documentFsPath, configResolverOptions)
 		.then((config: IConfig) => {
-			browserScopeCache = <string[]>config.json;
+			browsersListCache = <string[]>config.json;
 			needUpdateConfig = false;
 
-			return browserScopeCache;
+			return browsersListCache;
 		});
 }
 
@@ -189,10 +189,10 @@ function doValidate(document: TextDocument): any {
 		}
 	}
 
-	return getConfig(fsPath)
-		.then((browserScope) => {
+	return getBrowsersList(fsPath)
+		.then((browsersList) => {
 			const linterOptions = {
-				browsers: browserScope,
+				browsers: browsersList,
 				ignore: editorSettings.ignore,
 				onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
 			};
