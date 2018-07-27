@@ -106,16 +106,11 @@ function getSyntax(language: string): any {
 }
 
 function browsersListParser(data: string): string[] {
-	const lines = data.replace(/#.*(?:\n|\r\n)/g, '').split(/\r?\n/);
-
-	const browsers: string[] = [];
-	lines.forEach((line) => {
-		if (line !== '') {
-			browsers.push(line.trim());
-		}
-	});
-
-	return browsers;
+	return data
+		.replace(/#.*(?:\n|\r\n)/g, '')
+		.split(/\r?\n/)
+		.filter((line: string) => line !== '')
+		.map((line: string) => line.trim());
 }
 
 function getBrowsersList(documentFsPath: string): Promise<string[]> {
