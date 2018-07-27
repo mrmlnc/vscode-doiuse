@@ -246,11 +246,8 @@ connection.onDidChangeWatchedFiles(() => {
 	validate(allDocuments.all());
 });
 
-// The documents manager listen for text document create,
-// change and close on the connection
 allDocuments.listen(connection);
 
-// A text document has changed. Validate the document.
 allDocuments.onDidChangeContent((event) => {
 	if (editorSettings.run === 'onType') {
 		validate([event.document]);
