@@ -183,14 +183,12 @@ function validate(documents: TextDocument[]): void {
 	const tracker = new ErrorMessageTracker();
 
 	Promise
-		.all(
-			documents.map((document) =>
-				validateDocument(document)
-					.catch((err: Error) => {
-						tracker.add(getErrorMessage(err, document));
-					})
-			)
-		)
+		.all(documents.map((document) =>
+			validateDocument(document)
+				.catch((err: Error) => {
+					tracker.add(getErrorMessage(err, document));
+				})
+		))
 		.then(() => {
 			tracker.sendErrors(connection);
 		});
