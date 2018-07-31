@@ -132,6 +132,10 @@ function getBrowsersList(documentFsPath: string): Promise<string[]> {
 	return configResolver
 		.scan(documentFsPath, configResolverOptions)
 		.then((config: IConfig) => {
+			if (!config) {
+				return undefined;
+			}
+
 			browsersListCache = <string[]>config.json;
 			needUpdateConfig = false;
 
@@ -162,6 +166,10 @@ function validateDocument(document: TextDocument): any {
 
 	return getBrowsersList(fsPath)
 		.then((browsersList) => {
+			if (!browsersList) {
+				return undefined;
+			}
+
 			const linterOptions = {
 				browsers: browsersList,
 <<<<<<< HEAD
