@@ -172,14 +172,9 @@ function validateDocument(document: TextDocument): any {
 
 			const linterOptions = {
 				browsers: browsersList,
-<<<<<<< HEAD
 				ignore: workspaceSettings.ignore,
-				onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
-=======
-				ignore: editorSettings.ignore,
 				onFeatureUsage: (usageInfo: any) =>
 					diagnostics.push(makeDiagnostic(usageInfo))
->>>>>>> Remove comments that have no additional value
 			};
 
 			postcss(linter(linterOptions))
