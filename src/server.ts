@@ -44,6 +44,12 @@ let configResolver: ConfigResolver;
 let needUpdateConfig = true;
 let browsersListCache: string[] = [];
 
+const severityLevel = <any>{
+	Error: DiagnosticSeverity.Error,
+	Information: DiagnosticSeverity.Information,
+	Warning: DiagnosticSeverity.Warning
+};
+
 const doiuseNotFound: string = [
 	'Failed to load doiuse library.',
 	`Please install doiuse in your workspace folder using \'npm install doiuse\' or \'npm install -g doiuse\' and then press Retry.`
@@ -53,16 +59,9 @@ const doiuseNotFound: string = [
 function makeDiagnostic(problem: any): Diagnostic {
 	const source = problem.usage.source;
 	const message: string = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
-	const level: string = workspaceSettings.messageLevel;
-
-	const severityLevel = <any>{
-		Error: DiagnosticSeverity.Error,
-		Information: DiagnosticSeverity.Information,
-		Warning: DiagnosticSeverity.Warning
-	};
 
 	return {
-		severity: severityLevel[level],
+		severity: getSeverity(problem),
 		message,
 		range: {
 			start: {
@@ -77,6 +76,18 @@ function makeDiagnostic(problem: any): Diagnostic {
 		code: problem.feature,
 		source: 'doiuse'
 	};
+
+	function getSeverity(problem: any): DiagnosticSeverity {
+		if (problem.featureData.hasOwnProperty('missing')) {
+			return severityLevel.Error;
+		}
+
+		if (problem.featureData.hasOwnProperty('partial')) {
+			return severityLevel.Warning;
+		}
+
+		return severityLevel.Information;
+	}
 }
 
 function getErrorMessage(err: Error, document: TextDocument): string {
@@ -150,6 +161,15 @@ function validateDocument(document: TextDocument): any {
 	const content: string = document.getText();
 	const diagnostics: Diagnostic[] = [];
 
+	const getDiagnostics = (): Diagnostic[] => {
+		return diagnostics
+			.filter((problem: any) =>
+				problem.severity <= severityLevel[
+					workspaceSettings.messageLevel
+				]
+			);
+	};
+
 	const lang: string = document.languageId;
 	const syntax = getSyntax(lang);
 
@@ -161,7 +181,7 @@ function validateDocument(document: TextDocument): any {
 
 		const match = micromatch([fsPath], workspaceSettings.ignoreFiles);
 		if (workspaceSettings.ignoreFiles && match.length !== 0) {
-			return diagnostics;
+			return Promise.resolve(getDiagnostics());
 		}
 	}
 
@@ -181,7 +201,10 @@ function validateDocument(document: TextDocument): any {
 			postcss(linter(linterOptions))
 				.process(content, syntax && { syntax })
 				.then(() => {
-					connection.sendDiagnostics({ diagnostics, uri });
+					connection.sendDiagnostics({
+						diagnostics: getDiagnostics(),
+						uri
+					});
 				})
 				.catch((err: Error) => {
 					connection.console.error(err.toString());
