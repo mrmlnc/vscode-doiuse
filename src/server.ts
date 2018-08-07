@@ -133,6 +133,10 @@ function getBrowsersList(documentFsPath: string): Promise<string[]> {
 	return configResolver
 		.scan(documentFsPath, configResolverOptions)
 		.then((config: IConfig) => {
+			if (!config) {
+				return undefined;
+			}
+
 			browsersListCache = <string[]>config.json;
 			needUpdateConfig = false;
 
@@ -163,10 +167,15 @@ function validateDocument(document: TextDocument): any {
 
 	return getBrowsersList(fsPath)
 		.then((browsersList) => {
+			if (!browsersList) {
+				return undefined;
+			}
+
 			const linterOptions = {
 				browsers: browsersList,
 				ignore: workspaceSettings.ignore,
-				onFeatureUsage: (usageInfo: any) => diagnostics.push(makeDiagnostic(usageInfo))
+				onFeatureUsage: (usageInfo: any) =>
+					diagnostics.push(makeDiagnostic(usageInfo))
 			};
 
 			postcss(linter(linterOptions))
@@ -197,7 +206,6 @@ function validate(documents: TextDocument[]): void {
 
 connection.onInitialize((params) => {
 	workspaceFolder = params.rootPath;
-
 	configResolver = new ConfigResolver(workspaceFolder);
 
 	return moduleResolver
