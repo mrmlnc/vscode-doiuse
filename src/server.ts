@@ -56,6 +56,18 @@ const doiuseNotFound: string = [
 
 ].join('');
 
+function getSeverity(problem: any): DiagnosticSeverity {
+	if (problem.featureData.hasOwnProperty('missing')) {
+		return severityLevel.Error;
+	}
+
+	if (problem.featureData.hasOwnProperty('partial')) {
+		return severityLevel.Warning;
+	}
+
+	return severityLevel.Information;
+}
+
 function makeDiagnostic(problem: any): Diagnostic {
 	const source = problem.usage.source;
 	const message: string = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
@@ -76,18 +88,6 @@ function makeDiagnostic(problem: any): Diagnostic {
 		code: problem.feature,
 		source: 'doiuse'
 	};
-
-	function getSeverity(problem: any): DiagnosticSeverity {
-		if (problem.featureData.hasOwnProperty('missing')) {
-			return severityLevel.Error;
-		}
-
-		if (problem.featureData.hasOwnProperty('partial')) {
-			return severityLevel.Warning;
-		}
-
-		return severityLevel.Information;
-	}
 }
 
 function getErrorMessage(err: Error, document: TextDocument): string {
