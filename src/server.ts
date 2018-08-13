@@ -55,7 +55,10 @@ const doiuseNotFound: string = [
 
 ].join('');
 
-function getSeverity(problem: any): DiagnosticSeverity {
+function emptyBrowsersListCache(): void {
+	browsersListCache = {};
+}
+
 	if (problem.featureData.hasOwnProperty('missing')) {
 		return severityLevel.Error;
 	}
@@ -267,15 +270,15 @@ connection.onInitialize((params) => {
 		});
 });
 
-connection.onDidChangeConfiguration((params) => {
-	browsersListCache = {};
+connection.onDidChangeConfiguration((params): void => {
 	workspaceSettings = params.settings.doiuse;
+	emptyBrowsersListCache();
 
 	validate(allDocuments.all());
 });
 
-connection.onDidChangeWatchedFiles(() => {
-	browsersListCache = {};
+connection.onDidChangeWatchedFiles((): void => {
+	emptyBrowsersListCache();
 
 	validate(allDocuments.all());
 });
