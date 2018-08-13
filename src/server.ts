@@ -65,6 +65,7 @@ let linter: (options: any) => any;
 // "config"
 let configResolver: ConfigResolver;
 let browsersListCache: IBrowsersListCache = {};
+let loggedBrowserScope: string[] = [];
 
 const severityLevel = <any>{
 	Error: DiagnosticSeverity.Error,
@@ -80,6 +81,7 @@ const doiuseNotFound: string = [
 
 function emptyBrowsersListCache(): void {
 	browsersListCache = {};
+	loggedBrowserScope = [];
 }
 
 function getSeverity(problem: IProblem): DiagnosticSeverity {
@@ -150,6 +152,17 @@ function browsersListParser(data: string): IBrowsersList {
 		.map((line: string) => line.trim());
 }
 
+function getDocumentPath(document: string): string {
+	return document
+		.replace(workspaceFolder, '')
+		.replace(/[^\\]*$/g, '');
+}
+
+function hasBeenLogged(scopeToCheck: string): boolean {
+	return loggedBrowserScope.findIndex((scope: string) =>
+		scope === scopeToCheck) > -1;
+}
+
 function getBrowsersList(document: string): Promise<IBrowsersList> {
 	if (browsersListCache[document]) {
 		return Promise.resolve(browsersListCache[document]);
@@ -179,10 +192,15 @@ function getBrowsersList(document: string): Promise<IBrowsersList> {
 
 			browsersListCache[document] = <IBrowsersList>config.json;
 
-			connection.console.info(
-				'The following browser scope has been detected: ' +
-				browsersListCache[document].join(', ')
-			);
+			let currentScope: string = 'The browser scope for ' +
+				getDocumentPath(document) + ' is "' +
+				browsersListCache[document].join(', ') + '"';
+
+			if (!hasBeenLogged(currentScope)) {
+				connection.console.info(currentScope);
+				loggedBrowserScope.push(currentScope);
+			}
+
 			return browsersListCache[document];
 		})
 		.catch(() => undefined);
