@@ -27,6 +27,29 @@ import ConfigResolver, {
 
 } from 'vscode-config-resolver';
 
+interface IWorkspaceSettings {
+	browsers: string[];
+	ignore: string[];
+	ignoreFiles: string[];
+	messageLevel: string;
+	run: string;
+}
+
+type IBrowsersList = string[];
+
+interface IBrowsersListCache {
+	[key: string]: IBrowsersList;
+}
+
+interface IProblem {
+	feature: number;
+	featureData: Object;
+	usage: {
+		source: any
+	};
+	message: string;
+}
+
 const connection: IConnection = createConnection(
 	new IPCMessageReader(process),
 	new IPCMessageWriter(process)
@@ -36,12 +59,12 @@ const allDocuments: TextDocuments = new TextDocuments();
 
 // "global" settings
 let workspaceFolder: string;
-let workspaceSettings: any;
-let linter: any;
+let workspaceSettings: IWorkspaceSettings;
+let linter: (options: any) => any;
 
 // "config"
 let configResolver: ConfigResolver;
-let browsersListCache: { [key: string]: string[] } = {};
+let browsersListCache: IBrowsersListCache = {};
 
 const severityLevel = <any>{
 	Error: DiagnosticSeverity.Error,
@@ -59,6 +82,7 @@ function emptyBrowsersListCache(): void {
 	browsersListCache = {};
 }
 
+function getSeverity(problem: IProblem): DiagnosticSeverity {
 	if (problem.featureData.hasOwnProperty('missing')) {
 		return severityLevel.Error;
 	}
@@ -70,7 +94,7 @@ function emptyBrowsersListCache(): void {
 	return severityLevel.Information;
 }
 
-function makeDiagnostic(problem: any): Diagnostic {
+function makeDiagnostic(problem: IProblem): Diagnostic {
 	const source = problem.usage.source;
 	const message: string = problem.message.replace(/<input css \d+>:\d*:\d*:\s/, '');
 
@@ -94,7 +118,7 @@ function makeDiagnostic(problem: any): Diagnostic {
 
 function getErrorMessage(err: Error, document: TextDocument): string {
 	const fsPath: string = Files.uriToFilePath(document.uri);
-	let errorMessage = 'unknown error';
+	let errorMessage: string = 'unknown error';
 
 	if (typeof err.message === 'string' || <any>err.message instanceof String) {
 		errorMessage = err.message;
@@ -118,7 +142,7 @@ function getSyntax(language: string): any {
 	}
 }
 
-function browsersListParser(data: string): string[] {
+function browsersListParser(data: string): IBrowsersList {
 	return data
 		.replace(/#.*(?:\n|\r\n)/g, '')
 		.split(/\r?\n/)
@@ -126,18 +150,20 @@ function browsersListParser(data: string): string[] {
 		.map((line: string) => line.trim());
 }
 
-function getBrowsersList(document: string): Promise<string[]> {
+function getBrowsersList(document: string): Promise<IBrowsersList> {
 	const configResolverOptions: IOptions = {
 		packageProp: 'browserslist',
 		configFiles: [
-            '.browserslistrc',
+			'.browserslistrc',
 			'browserslist'
 		],
 		editorSettings: workspaceSettings.browsers || null,
-		parsers: [{
-			pattern: /\.?browserslist(rc)?$/,
-			parser: browsersListParser
-		}]
+		parsers: [
+			{
+				pattern: /\.?browserslist(rc)?$/,
+				parser: browsersListParser
+			}
+		]
 	};
 
 	if (browsersListCache[document]) {
@@ -151,7 +177,7 @@ function getBrowsersList(document: string): Promise<string[]> {
 				return undefined;
 			}
 
-			browsersListCache[document] = <string[]>config.json;
+			browsersListCache[document] = <IBrowsersList>config.json;
 
 			connection.console.info(
 				'The following browser scope has been detected: ' +
@@ -162,18 +188,15 @@ function getBrowsersList(document: string): Promise<string[]> {
 		.catch(() => undefined);
 }
 
-function validateDocument(document: TextDocument): any {
-	const uri = document.uri;
+function validateDocument(document: TextDocument): Promise<any> {
+	const uri: string = document.uri;
 	const content: string = document.getText();
 	const diagnostics: Diagnostic[] = [];
 
 	const getDiagnostics = (): Diagnostic[] => {
-		return diagnostics
-			.filter((problem: any) =>
-				problem.severity <= severityLevel[
-					workspaceSettings.messageLevel
-				]
-			);
+		return diagnostics.filter((diagnostic: Diagnostic) =>
+			diagnostic.severity <= severityLevel[workspaceSettings.messageLevel]
+		);
 	};
 
 	const lang: string = document.languageId;
@@ -233,7 +256,7 @@ function validate(documents: TextDocument[]): void {
 		});
 }
 
-connection.onInitialize((params) => {
+connection.onInitialize((params): Promise<any> => {
 	workspaceFolder = params.rootPath;
 	configResolver = new ConfigResolver(workspaceFolder);
 
@@ -285,19 +308,19 @@ connection.onDidChangeWatchedFiles((): void => {
 
 allDocuments.listen(connection);
 
-allDocuments.onDidChangeContent((event) => {
+allDocuments.onDidChangeContent((event): void => {
 	if (workspaceSettings.run === 'onType') {
 		validate([event.document]);
 	}
 });
 
-allDocuments.onDidSave((event) => {
+allDocuments.onDidSave((event): void => {
 	if (workspaceSettings.run === 'onSave') {
 		validate([event.document]);
 	}
 });
 
-allDocuments.onDidClose((event) => {
+allDocuments.onDidClose((event): void => {
 	connection.sendDiagnostics({
 		uri: event.document.uri,
 		diagnostics: []
