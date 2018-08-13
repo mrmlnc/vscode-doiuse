@@ -151,6 +151,10 @@ function browsersListParser(data: string): IBrowsersList {
 }
 
 function getBrowsersList(document: string): Promise<IBrowsersList> {
+	if (browsersListCache[document]) {
+		return Promise.resolve(browsersListCache[document]);
+	}
+
 	const configResolverOptions: IOptions = {
 		packageProp: 'browserslist',
 		configFiles: [
@@ -165,10 +169,6 @@ function getBrowsersList(document: string): Promise<IBrowsersList> {
 			}
 		]
 	};
-
-	if (browsersListCache[document]) {
-		return Promise.resolve(browsersListCache[document]);
-	}
 
 	return configResolver
 		.scan(document, configResolverOptions)
