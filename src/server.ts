@@ -41,8 +41,7 @@ let linter: any;
 
 // "config"
 let configResolver: ConfigResolver;
-let needUpdateConfig = true;
-let browsersListCache: string[] = [];
+let browsersListCache: { [key: string]: string[] } = {};
 
 const severityLevel = <any>{
 	Error: DiagnosticSeverity.Error,
@@ -124,7 +123,7 @@ function browsersListParser(data: string): string[] {
 		.map((line: string) => line.trim());
 }
 
-function getBrowsersList(documentFsPath: string): Promise<string[]> {
+function getBrowsersList(document: string): Promise<string[]> {
 	const configResolverOptions: IOptions = {
 		packageProp: 'browserslist',
 		configFiles: [
@@ -132,28 +131,32 @@ function getBrowsersList(documentFsPath: string): Promise<string[]> {
 			'browserslist'
 		],
 		editorSettings: workspaceSettings.browsers || null,
-		parsers: [
-			{ pattern: /\.?browserslist(rc)?$/, parser: browsersListParser }
-		]
+		parsers: [{
+			pattern: /\.?browserslist(rc)?$/,
+			parser: browsersListParser
+		}]
 	};
 
-	if (!needUpdateConfig) {
-		return Promise.resolve(browsersListCache);
+	if (browsersListCache[document]) {
+		return Promise.resolve(browsersListCache[document]);
 	}
 
 	return configResolver
-		.scan(documentFsPath, configResolverOptions)
+		.scan(document, configResolverOptions)
 		.then((config: IConfig) => {
 			if (!config) {
 				return undefined;
 			}
 
-			browsersListCache = <string[]>config.json;
-			needUpdateConfig = false;
+			browsersListCache[document] = <string[]>config.json;
 
-			connection.console.info(`The following browser scope has been detected: ${browsersListCache.join(', ')}`);
-			return browsersListCache;
-		});
+			connection.console.info(
+				'The following browser scope has been detected: ' +
+				browsersListCache[document].join(', ')
+			);
+			return browsersListCache[document];
+		})
+		.catch(() => undefined);
 }
 
 function validateDocument(document: TextDocument): any {
@@ -265,14 +268,14 @@ connection.onInitialize((params) => {
 });
 
 connection.onDidChangeConfiguration((params) => {
-	needUpdateConfig = true;
+	browsersListCache = {};
 	workspaceSettings = params.settings.doiuse;
 
 	validate(allDocuments.all());
 });
 
 connection.onDidChangeWatchedFiles(() => {
-	needUpdateConfig = true;
+	browsersListCache = {};
 
 	validate(allDocuments.all());
 });
