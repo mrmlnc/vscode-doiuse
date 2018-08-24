@@ -182,8 +182,8 @@ function getBrowsersList(document: string): Promise<IBrowsersList> {
 
 			const parentFolder: string = getParentFolder(document);
 
-			const currentScope: string = 'The browser scope for ' + parentFolder +
-				' is "' + (<IBrowsersList>config.json).join(', ') + '"';
+			const currentScope: string = 'The browser scope for files under ' +
+				parentFolder + ' is "' + (<IBrowsersList>config.json).join(', ') + '"';
 
 			if (!browsersListStore.hasOwnProperty(parentFolder)) {
 				connection.console.info(currentScope);
