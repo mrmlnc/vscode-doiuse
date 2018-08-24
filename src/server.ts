@@ -36,10 +36,7 @@ interface IWorkspaceSettings {
 }
 
 type IBrowsersList = string[];
-
-interface IBrowsersListCache {
-	[key: string]: IBrowsersList;
-}
+type IBrowsersListCache = Record<string, IBrowsersList>;
 
 interface IProblem {
 	feature: number;
