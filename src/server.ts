@@ -36,7 +36,7 @@ interface IWorkspaceSettings {
 }
 
 type IBrowsersList = string[];
-type IBrowsersListCache = Record<string, IBrowsersList>;
+type IBrowsersListStore = Record<string, IBrowsersList>;
 
 interface IProblem {
 	feature: number;
@@ -61,7 +61,7 @@ let linter: (options: any) => any;
 
 // "config"
 let configResolver: ConfigResolver;
-let browsersListCache: IBrowsersListCache = {};
+let browsersListStore: IBrowsersListStore = {};
 
 const severityLevel = <any>{
 	Error: DiagnosticSeverity.Error,
@@ -75,8 +75,8 @@ const doiuseNotFound: string = [
 
 ].join('');
 
-function emptyBrowsersListCache(): void {
-	browsersListCache = {};
+function emptyBrowsersListStore(): void {
+	browsersListStore = {};
 }
 
 function getSeverity(problem: IProblem): DiagnosticSeverity {
@@ -154,8 +154,8 @@ function getParentFolder(document: string): string {
 }
 
 function getBrowsersList(document: string): Promise<IBrowsersList> {
-	if (browsersListCache[document]) {
-		return Promise.resolve(browsersListCache[document]);
+	if (browsersListStore[document]) {
+		return Promise.resolve(browsersListStore[document]);
 	}
 
 	const configResolverOptions: IOptions = {
@@ -185,12 +185,12 @@ function getBrowsersList(document: string): Promise<IBrowsersList> {
 			const currentScope: string = 'The browser scope for ' + parentFolder +
 				' is "' + (<IBrowsersList>config.json).join(', ') + '"';
 
-			if (!browsersListCache.hasOwnProperty(parentFolder)) {
+			if (!browsersListStore.hasOwnProperty(parentFolder)) {
 				connection.console.info(currentScope);
-				browsersListCache[parentFolder] = <IBrowsersList>config.json;
+				browsersListStore[parentFolder] = <IBrowsersList>config.json;
 			}
 
-			return browsersListCache[parentFolder];
+			return browsersListStore[parentFolder];
 		})
 		.catch(() => undefined);
 }
@@ -301,13 +301,13 @@ connection.onInitialize((params): Promise<any> => {
 
 connection.onDidChangeConfiguration((params): void => {
 	workspaceSettings = params.settings.doiuse;
-	emptyBrowsersListCache();
+	emptyBrowsersListStore();
 
 	validate(allDocuments.all());
 });
 
 connection.onDidChangeWatchedFiles((): void => {
-	emptyBrowsersListCache();
+	emptyBrowsersListStore();
 
 	validate(allDocuments.all());
 });
