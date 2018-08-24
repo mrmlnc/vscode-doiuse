@@ -152,6 +152,7 @@ function browsersListParser(data: string): IBrowsersList {
 function getDocumentPath(document: string): string {
 	return path
 		.relative(workspaceFolder, document)
+		.replace(/[^(/|\\)]*$/g, '');
 }
 
 function hasBeenLogged(scopeToCheck: string): boolean {
