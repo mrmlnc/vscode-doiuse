@@ -62,7 +62,6 @@ let linter: (options: any) => any;
 // "config"
 let configResolver: ConfigResolver;
 let browsersListCache: IBrowsersListCache = {};
-let loggedBrowserScope: string[] = [];
 
 const severityLevel = <any>{
 	Error: DiagnosticSeverity.Error,
@@ -78,7 +77,6 @@ const doiuseNotFound: string = [
 
 function emptyBrowsersListCache(): void {
 	browsersListCache = {};
-	loggedBrowserScope = [];
 }
 
 function getSeverity(problem: IProblem): DiagnosticSeverity {
@@ -149,15 +147,10 @@ function browsersListParser(data: string): IBrowsersList {
 		.map((line: string) => line.trim());
 }
 
-function getDocumentPath(document: string): string {
+function getParentFolder(document: string): string {
 	return path
 		.relative(workspaceFolder, document)
 		.replace(/[^(/|\\)]*$/g, '');
-}
-
-function hasBeenLogged(scopeToCheck: string): boolean {
-	return loggedBrowserScope.findIndex((scope: string) =>
-		scope === scopeToCheck) > -1;
 }
 
 function getBrowsersList(document: string): Promise<IBrowsersList> {
@@ -187,18 +180,17 @@ function getBrowsersList(document: string): Promise<IBrowsersList> {
 				return undefined;
 			}
 
-			browsersListCache[document] = <IBrowsersList>config.json;
+			const parentFolder: string = getParentFolder(document);
 
-			let currentScope: string = 'The browser scope for ' +
-				getDocumentPath(document) + ' is "' +
-				browsersListCache[document].join(', ') + '"';
+			const currentScope: string = 'The browser scope for ' + parentFolder +
+				' is "' + (<IBrowsersList>config.json).join(', ') + '"';
 
-			if (!hasBeenLogged(currentScope)) {
+			if (!browsersListCache.hasOwnProperty(parentFolder)) {
 				connection.console.info(currentScope);
-				loggedBrowserScope.push(currentScope);
+				browsersListCache[parentFolder] = <IBrowsersList>config.json;
 			}
 
-			return browsersListCache[document];
+			return browsersListCache[parentFolder];
 		})
 		.catch(() => undefined);
 }
