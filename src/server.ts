@@ -242,8 +242,9 @@ function validateDocument(document: TextDocument): Promise<any> {
 						uri
 					});
 				})
-				// Ignore syntax errors
-				.catch(() => {});
+				.catch(() => {
+					// Ignore syntax errors
+				});
 		});
 }
 
